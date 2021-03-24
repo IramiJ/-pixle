@@ -15,12 +15,20 @@ pygame.display.set_caption('!Pixle')
 Tile_size = 24
 #------font rendering------------------------------------------------------------------------------------
 font = Font.Font('data/images/fonts/small_font.png', (255,255,255))
-while True:
-	font.render('!pixle', surface, [0, 0])
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT:
-			pygame.quit()
-			sys.exit()
-	screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
-	pygame.display.update()
-	clock.tick(60)
+#------spritesheet handler-------------------------------------------------------------------------------
+def load_spritesheet(path):
+    tiles = []
+    for img in os.listdir(path):
+        tiles.append(pygame.image.load(path+'/'+img))
+    return tiles
+tiles = load_spritesheet('data/images/tilesets/Gras_tiles')
+if __name__ == '__main__':
+    while True:
+        font.render('!Pixle', surface, [0, 0])
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
