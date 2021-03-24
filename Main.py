@@ -17,10 +17,11 @@ font = Font.Font('data/images/fonts/small_font.png', (255,255,255))
 #------spritesheet handler-------------------------------------------------------------------------------
 def load_spritesheet(path):
     tiles = []
-    for img in os.listdir(path):
-        tiles.append(pygame.image.load(path+'/'+img))
-    return tiles
-tiles = load_spritesheet('data/images/tilesets/Gras_tiles')
+    for p in os.listdir(path):
+        for img in os.listdir(path+'/'+p):
+            tiles.append(pygame.image.load(path+'/'+p+'/'+img))
+        return tiles
+tiles = load_spritesheet('data/images/tilesets')
 #------tile bar-----------------------------------------------------------------------------------------
 class tile_bar():
     def __init__(self):
