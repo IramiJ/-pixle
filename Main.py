@@ -24,7 +24,7 @@ def load_spritesheet(path):
         for img in os.listdir(path+'/'+p):
             temp_tiles.append(pygame.image.load(path+'/'+p+'/'+img))
         tiles[p] = temp_tiles
-        return tiles
+    return tiles
 tiles = load_spritesheet('data/images/tilesets')
 #------tile bar-----------------------------------------------------------------------------------------
 class tile_bar():
@@ -50,7 +50,13 @@ def render_tile_names(surf, tile_list):
         font.render(tile_name, surf, [0, y])
         y += 16
     return y
-
+def calc_name_rects(tile_names):
+    name_rects = []
+    y = 0
+    for tile_name in tile_names:
+        name_rects.append(pygame.Rect(0, y, font.width(tile_name),8))
+        y += 16
+    return name_rects
 if __name__ == '__main__':
     while True:
         surface.fill((0,0,0))
@@ -59,6 +65,10 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                for rect in calc_name_rects(tiles):
+                    if rect.collidepoint(event.pos):
+                        pass
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
