@@ -25,7 +25,22 @@ def load_spritesheet(path):
             temp_tiles.append(pygame.image.load(path+'/'+p+'/'+img))
         tiles[p] = temp_tiles
     return tiles
+#------tiles and so on-----------------------------------------------------------------------------------
 tiles = load_spritesheet('data/images/tilesets')
+current_tile_list = []
+def render_spef_tiles(surf, tiles_list):
+    y = 50
+    try:
+        for tile in tiles[tiles_list[0]]:
+            surf.blit(tile, (0, y))
+            y += 32
+    except IndexError:
+        for ts in tiles:
+            for tile in tiles[ts]:
+                surf.blit(tile, (0, y))
+                y += 32
+            return 0;
+
 #------tile bar-----------------------------------------------------------------------------------------
 class tile_bar():
     def __init__(self):
@@ -33,10 +48,13 @@ class tile_bar():
         self.y = 0
         self.width = surface.get_width() // 6
         self.height = surface.get_height()
-        pygame.draw.line(surface, (255, 255, 255), (0, 56), (self.width, 56))
+        self.surf = pygame.Surface((self.width, self.height))
     def render(self,surf):
-        render_tiles(surf, tiles)
+        self.surf.fill((48, 97, 32))
+        surf.blit(self.surf, (0, 0))
+        render_spef_tiles(surf, current_tile_list)
         render_tile_names(surf, tiles)
+        pygame.draw.line(surface, (255, 255, 255), (0, 48), (self.width, 48))
 def render_tiles(surf, tile_list):
     y = 32 + 50
     for tiles in tile_list:
@@ -51,24 +69,32 @@ def render_tile_names(surf, tile_list):
         y += 16
     return y
 def calc_name_rects(tile_names):
-    name_rects = []
+    name_rects = {}
     y = 0
     for tile_name in tile_names:
-        name_rects.append(pygame.Rect(0, y, font.width(tile_name),8))
+        name_rects[tile_name] = pygame.Rect(0, y, font.width(tile_name),8)
         y += 16
     return name_rects
+def mouse_collision_test(name_rects, mouse_rect):
+    for rect in name_rects:
+        if name_rects[rect].colliderect(mouse_rect):
+            current_tile_list.clear()
+            current_tile_list.append(rect)
+name_rects = calc_name_rects(tiles)
 if __name__ == '__main__':
     while True:
-        surface.fill((0,0,0))
+        screen.fill((0,0,0))
         tile_bar().render(surface)
+        mx, my = pygame.mouse.get_pos()
+        mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
+        pygame.draw.rect(screen, (255,0,0), mouse_rect)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == MOUSEBUTTONDOWN:
-                for rect in calc_name_rects(tiles):
-                    if rect.collidepoint(event.pos):
-                        pass
+                if event.button == 1:
+                    mouse_collision_test(name_rects, mouse_rect)
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
