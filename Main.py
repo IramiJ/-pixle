@@ -1,6 +1,4 @@
-import pygame,sys,math,os,random
-import data.scripts.block_handler as b_handler
-import data.scripts.core_funcs as core_funcs
+import pygame,sys,math,os,random,time
 import data.scripts.text as Font
 from pygame.locals import *
 #------initialization------------------------------------------------------------------------------------
@@ -30,16 +28,23 @@ tiles = load_spritesheet('data/images/tilesets')
 current_tile_list = []
 def render_spef_tiles(surf, tiles_list):
     y = 50
+    rects = []
+    tiles_2 = []
     try:
         for tile in tiles[tiles_list[0]]:
             surf.blit(tile, (0, y))
+            tiles_2.append(tile)
+            rects.append(pygame.Rect(0, y, tile_size, tile_size))
             y += 32
+        return rects, tiles_2
     except IndexError:
         for ts in tiles:
             for tile in tiles[ts]:
                 surf.blit(tile, (0, y))
+                rects.append(pygame.Rect(0, y, tile_size, tile_size))
+                tiles_2.append(tile)
                 y += 32
-            return 0;
+        return rects, tiles_2
 
 #------tile bar-----------------------------------------------------------------------------------------
 class tile_bar():
@@ -81,13 +86,49 @@ def mouse_collision_test(name_rects, mouse_rect):
             current_tile_list.clear()
             current_tile_list.append(rect)
 name_rects = calc_name_rects(tiles)
+#------grid layout-------------------------------------------------------------------------------------------
+def set_grid_layout(surf, grid_size_x, grid_size_y):
+    grid_rects = []
+    for i in range(SCREEN_SIZE[1]//grid_size_y):
+        for j in range(SCREEN_SIZE[0]//grid_size_x):
+            grid_rects.append(pygame.Rect(j*tile_size, i*tile_size, tile_size, tile_size))
+    return grid_rects
+grid_rects = set_grid_layout(surface, tile_size, tile_size)
+#------get the tiles key dict--------------------------------------------------------------------------------
+def make_dict(tiles_dict, rects):
+    end_dict = {}
+    for tiles in tiles_dict:
+        for tile, rect in zip(tiles_dict[tiles], rects):
+            end_dict[tile] = rect
+    return end_dict
+rects, tiles2 = render_spef_tiles(surface, current_tile_list)
+tile_dict = make_dict(tiles, rects)
+#------handling the current tile-----------------------------------------------------------------------------
+global current_tile
+current_tile = None
+def change_tile(collision_obj, rects_list, tile_list):
+    tile = 0
+    global current_tile
+    for rect, tile in zip(rects_list, tile_list):
+        if collision_obj.colliderect(rect):
+            current_tile = tile
+    return current_tile
+#------main method-------------------------------------------------------------------------------------------
+start = time.time()
 if __name__ == '__main__':
     while True:
-        screen.fill((0,0,0))
+        c = time.time() - start
+        if c >= 1:
+            print(tiles2)
+            start = time.time()
+        surface.fill((0,0,0))
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
         mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
-        pygame.draw.rect(screen, (255,0,0), mouse_rect)
+        try:
+            surface.blit(current_tile, (mx//2 - (tile_size//2), my//2-(tile_size//2)))
+        except TypeError:
+            pass
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -95,6 +136,7 @@ if __name__ == '__main__':
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_collision_test(name_rects, mouse_rect)
+                    change_tile(mouse_rect, rects, tiles2)
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
