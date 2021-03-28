@@ -36,8 +36,12 @@ def render_spef_tiles(surf, tiles_list):
             surf.blit(tile, (x, y))
             tiles_2.append(tile)
             rects.append(pygame.Rect(x, y, tile_size, tile_size))
-            y += 32
-        x += 32
+            if y + tile_size >= surface.get_height():
+                x += tile_size 
+                y = 0
+            else:
+                y += 32
+        print(y)
         return rects, tiles_2
     except IndexError:
         for ts in tiles:
@@ -109,11 +113,21 @@ def change_tile(collision_obj, rects_list, tile_list):
         if collision_obj.colliderect(rect):
             current_tile = tile
     return current_tile
+#------making the game map-----------------------------------------------------------------------------------
+game_map = {}
+def render_game_map(surf):
+    for rect in game_map:
+        data = rect
+        surf.blit(game_map[rect], (int(data[0]), int(data[2])))
+#------grid rect thing---------------------------------------------------------------------------------------
+needed_grid_rect = pygame.Rect(16, 16, tile_size, tile_size)
+grid_stuff = ""
 #------main method-------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     while True:
         rects, tiles2 = render_spef_tiles(surface, current_tile_list)
         surface.fill((0,0,0))
+        render_game_map(surface)
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
         mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
@@ -121,8 +135,10 @@ if __name__ == '__main__':
             if grid_rect.colliderect(mouse_rect):
                 try:
                     surface.blit(current_tile, (grid_rect.x, grid_rect.y))
+                    needed_grid_rect = grid_rect
                 except TypeError:
                     pass
+        grid_stuff = needed_grid_rect.x, ';', needed_grid_rect.y
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -131,6 +147,11 @@ if __name__ == '__main__':
                 if event.button == 1:
                     mouse_collision_test(name_rects, mouse_rect)
                     change_tile(mouse_rect, rects, tiles2)
+            if event.type == MOUSEWHEEL:
+                game_map[grid_stuff] = current_tile
+            if event.type == KEYDOWN:
+                if event.key == 'K_z':
+                    pass
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
