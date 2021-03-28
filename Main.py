@@ -28,22 +28,25 @@ tiles = load_spritesheet('data/images/tilesets')
 current_tile_list = []
 def render_spef_tiles(surf, tiles_list):
     y = 50
+    x = 0
     rects = []
     tiles_2 = []
     try:
         for tile in tiles[tiles_list[0]]:
-            surf.blit(tile, (0, y))
+            surf.blit(tile, (x, y))
             tiles_2.append(tile)
-            rects.append(pygame.Rect(0, y, tile_size, tile_size))
+            rects.append(pygame.Rect(x, y, tile_size, tile_size))
             y += 32
+        x += 32
         return rects, tiles_2
     except IndexError:
         for ts in tiles:
             for tile in tiles[ts]:
-                surf.blit(tile, (0, y))
-                rects.append(pygame.Rect(0, y, tile_size, tile_size))
+                surf.blit(tile, (x, y))
+                rects.append(pygame.Rect(x, y, tile_size, tile_size))
                 tiles_2.append(tile)
                 y += 32
+            x += 32
         return rects, tiles_2
 
 #------tile bar-----------------------------------------------------------------------------------------
@@ -114,10 +117,12 @@ if __name__ == '__main__':
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
         mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
-        try:
-            surface.blit(current_tile, (mx//2 - (tile_size//2), my//2-(tile_size//2)))
-        except TypeError:
-            pass
+        for grid_rect in grid_rects:
+            if grid_rect.colliderect(mouse_rect):
+                try:
+                    surface.blit(current_tile, (grid_rect.x, grid_rect.y))
+                except TypeError:
+                    pass
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
