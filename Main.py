@@ -60,13 +60,6 @@ class tile_bar():
         render_spef_tiles(surf, current_tile_list)
         render_tile_names(surf, tiles)
         pygame.draw.line(surface, (255, 255, 255), (0, 48), (self.width, 48))
-def render_tiles(surf, tile_list):
-    y = 32 + 50
-    for tiles in tile_list:
-        for tile in tile_list[tiles]:
-            surf.blit(pygame.transform.scale(tile, (tile_size // tile_scale, tile_size // tile_scale)), [0, y])
-            y += 24
-    return y
 def render_tile_names(surf, tile_list):
     y = 0
     for tile_name in tile_list:
@@ -114,13 +107,9 @@ def change_tile(collision_obj, rects_list, tile_list):
             current_tile = tile
     return current_tile
 #------main method-------------------------------------------------------------------------------------------
-start = time.time()
 if __name__ == '__main__':
     while True:
-        c = time.time() - start
-        if c >= 1:
-            print(tiles2)
-            start = time.time()
+        rects, tiles2 = render_spef_tiles(surface, current_tile_list)
         surface.fill((0,0,0))
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
