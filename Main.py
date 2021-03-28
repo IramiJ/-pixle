@@ -1,4 +1,4 @@
-import pygame,sys,math,os,random,time
+import pygame,sys,math,os,random,time,json
 import data.scripts.text as Font
 from pygame.locals import *
 #------initialization------------------------------------------------------------------------------------
@@ -36,12 +36,11 @@ def render_spef_tiles(surf, tiles_list):
             surf.blit(tile, (x, y))
             tiles_2.append(tile)
             rects.append(pygame.Rect(x, y, tile_size, tile_size))
-            if y + tile_size >= surface.get_height():
-                x += tile_size 
-                y = 0
+            if y >= 200:
+                x += tile_size * 2
+                y = 50
             else:
                 y += 32
-        print(y)
         return rects, tiles_2
     except IndexError:
         for ts in tiles:
@@ -49,8 +48,11 @@ def render_spef_tiles(surf, tiles_list):
                 surf.blit(tile, (x, y))
                 rects.append(pygame.Rect(x, y, tile_size, tile_size))
                 tiles_2.append(tile)
-                y += 32
-            x += 32
+                if y >= 200:
+                    x += tile_size  * 2
+                    y = 50
+                else:
+                    y += 32
         return rects, tiles_2
 
 #------tile bar-----------------------------------------------------------------------------------------
@@ -147,11 +149,13 @@ if __name__ == '__main__':
                 if event.button == 1:
                     mouse_collision_test(name_rects, mouse_rect)
                     change_tile(mouse_rect, rects, tiles2)
-            if event.type == MOUSEWHEEL:
-                game_map[grid_stuff] = current_tile
+                if event.button == 3:
+                    game_map[grid_stuff] = current_tile
             if event.type == KEYDOWN:
-                if event.key == 'K_z':
-                    pass
+                if event.key == K_DOWN:
+                    for grid_rect in grid_rects:
+                        if grid_rect.colliderect(mouse_rect):
+                            del game_map[grid_stuff]
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
