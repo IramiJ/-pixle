@@ -138,11 +138,9 @@ def save_map(g_map, json_file="map.json"):
         n = 0
         for item in game_map:
             tile_name = "tile"+str(n)
-            tile_info = {tile_name: {
-
-            }}
-            tile_info[tile_name]["rect"] = str(pygame.Rect(item[0], item[1], tile_size, tile_size))
-            tile_info[tile_name]["image"] = str(game_map[item])
+            tile_info = {}
+            tile_info["rect"] = str(pygame.Rect(item[0], item[1], tile_size, tile_size))
+            tile_info["image"] = str(game_map[item])
             end_dict[tile_name] = tile_info
             n += 1
         end_dict = json.dumps(end_dict)
