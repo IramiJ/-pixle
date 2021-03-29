@@ -1,5 +1,6 @@
 import pygame,sys,math,os,random,time,json
 import data.scripts.text as Font
+from json import JSONEncoder
 from pygame.locals import *
 #------initialization------------------------------------------------------------------------------------
 pygame.init()
@@ -17,14 +18,17 @@ font = Font.Font('data/images/fonts/small_font.png', (255,255,255))
 #------spritesheet handler-------------------------------------------------------------------------------
 def load_spritesheet(path):
     tiles = {}
+    tile_imgs = {}
     for p in os.listdir(path):
         temp_tiles = []
         for img in os.listdir(path+'/'+p):
             temp_tiles.append(pygame.image.load(path+'/'+p+'/'+img))
+            tile_imgs[path+'/'+p+'/'+img] = pygame.image.load(path+'/'+p+'/'+img)
         tiles[p] = temp_tiles
-    return tiles
+    return tiles, tile_imgs
 #------tiles and so on-----------------------------------------------------------------------------------
-tiles = load_spritesheet('data/images/tilesets')
+tiles, tile_imgs = load_spritesheet('data/images/tilesets')
+tile_paths = {}
 current_tile_list = []
 def render_spef_tiles(surf, tiles_list):
     y = 50
@@ -120,10 +124,30 @@ game_map = {}
 def render_game_map(surf):
     for rect in game_map:
         data = rect
-        surf.blit(game_map[rect], (int(data[0]), int(data[2])))
+        surf.blit(game_map[rect], (int(data[0]), int(data[1])))
 #------grid rect thing---------------------------------------------------------------------------------------
 needed_grid_rect = pygame.Rect(16, 16, tile_size, tile_size)
 grid_stuff = ""
+#------map saver---------------------------------------------------------------------------------------------
+class MyEncoder(JSONEncoder):
+        def default(self, o):
+            return o.__dict__
+def save_map(g_map, json_file="map.json"):
+    with open(json_file, 'w') as f:
+        end_dict = {}
+        n = 0
+        for item in game_map:
+            tile_name = "tile"+str(n)
+            tile_info = {tile_name: {
+
+            }}
+            tile_info[tile_name]["rect"] = str(pygame.Rect(item[0], item[1], tile_size, tile_size))
+            tile_info[tile_name]["image"] = str(game_map[item])
+            end_dict[tile_name] = tile_info
+            n += 1
+        end_dict = json.dumps(end_dict)
+        f.write(end_dict)
+    f.close()
 #------main method-------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     while True:
@@ -140,9 +164,10 @@ if __name__ == '__main__':
                     needed_grid_rect = grid_rect
                 except TypeError:
                     pass
-        grid_stuff = needed_grid_rect.x, ';', needed_grid_rect.y
+        grid_stuff = needed_grid_rect.x, needed_grid_rect.y
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                save_map(game_map)
                 pygame.quit()
                 sys.exit()
             if event.type == MOUSEBUTTONDOWN:
@@ -156,6 +181,9 @@ if __name__ == '__main__':
                     for grid_rect in grid_rects:
                         if grid_rect.colliderect(mouse_rect):
                             del game_map[grid_stuff]
+            if event.type == MOUSEWHEEL:
+                pass
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+
