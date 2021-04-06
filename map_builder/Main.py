@@ -7,7 +7,8 @@ pygame.init()
 clock = pygame.time.Clock()
 SCREEN_SIZE = [992,592]
 screen = pygame.display.set_mode(SCREEN_SIZE,0,32)
-surface = pygame.Surface((SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2))
+surface_size = [SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2]
+surface = pygame.Surface(surface_size)
 pygame.display.set_caption('!Pixle')
 #-----block handler and Stuff----------------------------------------------------------------------------
 tile_size = 16
@@ -16,7 +17,7 @@ true_scroll = [0, 0]
 #------font rendering------------------------------------------------------------------------------------
 font = Font.Font('data/images/fonts/small_font.png', (255,255,255))
 #------spritesheet handler-------------------------------------------------------------------------------
-def load_spritesheet(path):
+def load_tiles(path):
     tiles = {}
     tile_imgs = {}
     for p in os.listdir(path):
@@ -27,7 +28,7 @@ def load_spritesheet(path):
         tiles[p] = temp_tiles
     return tiles, tile_imgs
 #------tiles and so on-----------------------------------------------------------------------------------
-tiles, tile_imgs = load_spritesheet('data/images/tilesets')
+tiles, tile_imgs = load_tiles('data/images/tilesets')
 tile_paths = {}
 current_tile_list = []
 def render_spef_tiles(surf, tiles_list):
@@ -149,8 +150,11 @@ def save_map(g_map, json_file="map.json"):
 #------tile--------------------------------------------------------------------------------------------------
 tile_count = 0
 #------main method-------------------------------------------------------------------------------------------
+global mouse_scale
+mouse_scale = 2
 if __name__ == '__main__':
     while True:
+        surface = pygame.Surface(surface_size)
         rects, tiles2 = render_spef_tiles(surface, current_tile_list)
         surface.fill((0,0,0))
         render_game_map(surface)
@@ -158,15 +162,6 @@ if __name__ == '__main__':
         mx, my = pygame.mouse.get_pos()
         font.render(str("x: "+str(mx)+" y: "+str(my)), surface, (tile_bar().width, 0))
         font.render("tiles: "+str(tile_count), surface, (tile_bar().width, 12))
-        mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
-        for grid_rect in grid_rects:
-            if grid_rect.colliderect(mouse_rect):
-                try:
-                    surface.blit(pygame.image.load(current_tile), (grid_rect.x, grid_rect.y))
-                    needed_grid_rect = grid_rect
-                except:
-                    pass
-        grid_stuff = needed_grid_rect.x, needed_grid_rect.y
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 save_map(game_map)
@@ -179,10 +174,6 @@ if __name__ == '__main__':
                 if event.button == 3:
                     game_map[grid_stuff] = current_tile
                     tile_count += 1
-                if event.button == 4:
-                    print("You scrolled up")
-                if event.button == 5:
-                    print("you scrolled down")
             if event.type == KEYDOWN:
                 if event.key == K_DOWN:
                     for grid_rect in grid_rects:
@@ -192,8 +183,25 @@ if __name__ == '__main__':
                                 tile_count -= 1
                             except KeyError:
                                 continue
-            if event.type == MOUSEWHEEL:
-                pass
+                if event.key == K_MINUS:
+                    mouse_scale *= 1.5
+                    surface_size[0] /= 1.5
+                    surface_size[1] /= 1.5
+                if event.key == K_PLUS:
+                    surface_size[0] *= 1.5
+                    surface_size[1] *= 1.5
+                    mouse_scale /= 1.5
+        mx /= mouse_scale
+        my /= mouse_scale
+        mouse_rect = pygame.Rect(mx, my, 1, 1)
+        for grid_rect in grid_rects:
+            if grid_rect.colliderect(mouse_rect):
+                try:
+                    surface.blit(pygame.image.load(current_tile), (grid_rect.x, grid_rect.y))
+                    needed_grid_rect = grid_rect
+                except:
+                    pass
+        grid_stuff = needed_grid_rect.x, needed_grid_rect.y
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
