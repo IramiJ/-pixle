@@ -22,7 +22,7 @@ def load_spritesheet(path):
     for p in os.listdir(path):
         temp_tiles = []
         for img in os.listdir(path+'/'+p):
-            temp_tiles.append(pygame.image.load(path+'/'+p+'/'+img))
+            temp_tiles.append([path+'/'+p+'/'+img,pygame.image.load(path+'/'+p+'/'+img)])
             tile_imgs[path+'/'+p+'/'+img] = pygame.image.load(path+'/'+p+'/'+img)
         tiles[p] = temp_tiles
     return tiles, tile_imgs
@@ -37,8 +37,8 @@ def render_spef_tiles(surf, tiles_list):
     tiles_2 = []
     try:
         for tile in tiles[tiles_list[0]]:
-            surf.blit(tile, (x, y))
-            tiles_2.append(tile)
+            surf.blit(tile[1], (x, y))
+            tiles_2.append(tile[1])
             rects.append(pygame.Rect(x, y, tile_size, tile_size))
             if y >= 200:
                 x += tile_size * 2
@@ -46,10 +46,10 @@ def render_spef_tiles(surf, tiles_list):
             else:
                 y += 32
         return rects, tiles_2
-    except IndexError:
+    except:
         for ts in tiles:
             for tile in tiles[ts]:
-                surf.blit(tile, (x, y))
+                surf.blit(tile[1], (x, y))
                 rects.append(pygame.Rect(x, y, tile_size, tile_size))
                 tiles_2.append(tile)
                 if y >= 200:
@@ -58,7 +58,6 @@ def render_spef_tiles(surf, tiles_list):
                 else:
                     y += 32
         return rects, tiles_2
-
 #------tile bar-----------------------------------------------------------------------------------------
 class tile_bar():
     def __init__(self):
@@ -105,7 +104,8 @@ def make_dict(tiles_dict, rects):
     end_dict = {}
     for tiles in tiles_dict:
         for tile, rect in zip(tiles_dict[tiles], rects):
-            end_dict[tile] = rect
+            end_tile = tile[1]
+            end_dict[end_tile] = rect
     return end_dict
 rects, tiles2 = render_spef_tiles(surface, current_tile_list)
 tile_dict = make_dict(tiles, rects)
@@ -117,14 +117,14 @@ def change_tile(collision_obj, rects_list, tile_list):
     global current_tile
     for rect, tile in zip(rects_list, tile_list):
         if collision_obj.colliderect(rect):
-            current_tile = tile
+            current_tile = tile[0]
     return current_tile
 #------making the game map-----------------------------------------------------------------------------------
 game_map = {}
 def render_game_map(surf):
     for rect in game_map:
         data = rect
-        surf.blit(game_map[rect], (int(data[0]), int(data[1])))
+        surf.blit(pygame.image.load(game_map[rect]), (int(data[0]), int(data[1])))
 #------grid rect thing---------------------------------------------------------------------------------------
 needed_grid_rect = pygame.Rect(16, 16, tile_size, tile_size)
 grid_stuff = ""
@@ -146,6 +146,8 @@ def save_map(g_map, json_file="map.json"):
         end_dict = json.dumps(end_dict)
         f.write(end_dict)
     f.close()
+#------tile--------------------------------------------------------------------------------------------------
+tile_count = 0
 #------main method-------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     while True:
@@ -154,13 +156,15 @@ if __name__ == '__main__':
         render_game_map(surface)
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
+        font.render(str("x: "+str(mx)+" y: "+str(my)), surface, (tile_bar().width, 0))
+        font.render("tiles: "+str(tile_count), surface, (tile_bar().width, 12))
         mouse_rect = pygame.Rect(mx//2, my//2, 1, 1)
         for grid_rect in grid_rects:
             if grid_rect.colliderect(mouse_rect):
                 try:
-                    surface.blit(current_tile, (grid_rect.x, grid_rect.y))
+                    surface.blit(pygame.image.load(current_tile), (grid_rect.x, grid_rect.y))
                     needed_grid_rect = grid_rect
-                except TypeError:
+                except:
                     pass
         grid_stuff = needed_grid_rect.x, needed_grid_rect.y
         for event in pygame.event.get():
@@ -174,14 +178,22 @@ if __name__ == '__main__':
                     change_tile(mouse_rect, rects, tiles2)
                 if event.button == 3:
                     game_map[grid_stuff] = current_tile
+                    tile_count += 1
+                if event.button == 4:
+                    print("You scrolled up")
+                if event.button == 5:
+                    print("you scrolled down")
             if event.type == KEYDOWN:
                 if event.key == K_DOWN:
                     for grid_rect in grid_rects:
                         if grid_rect.colliderect(mouse_rect):
-                            del game_map[grid_stuff]
+                            try:
+                                del game_map[grid_stuff]
+                                tile_count -= 1
+                            except KeyError:
+                                continue
             if event.type == MOUSEWHEEL:
                 pass
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
-
