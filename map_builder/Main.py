@@ -121,11 +121,15 @@ def change_tile(collision_obj, rects_list, tile_list):
             current_tile = tile[0]
     return current_tile
 #------making the game map-----------------------------------------------------------------------------------
+global game_map
 game_map = {}
 def render_game_map(surf):
     for rect in game_map:
         data = rect
-        surf.blit(pygame.image.load(game_map[rect]), (int(data[0]), int(data[1])))
+        try:
+            surf.blit(pygame.image.load(game_map[rect]), (int(data[0]), int(data[1])))
+        except:
+            pass
 #------grid rect thing---------------------------------------------------------------------------------------
 needed_grid_rect = pygame.Rect(16, 16, tile_size, tile_size)
 grid_stuff = ""
@@ -147,21 +151,27 @@ def save_map(g_map, json_file="map.json"):
         end_dict = json.dumps(end_dict)
         f.write(end_dict)
     f.close()
-#------tile--------------------------------------------------------------------------------------------------
-tile_count = 0
+#------delete all function-----------------------------------------------------------------------------------
+def delete_all():
+    global game_map
+    game_map.clear()
 #------main method-------------------------------------------------------------------------------------------
 global mouse_scale
 mouse_scale = 2
+add_tile = False
+deleting = False
 if __name__ == '__main__':
     while True:
         surface = pygame.Surface(surface_size)
         rects, tiles2 = render_spef_tiles(surface, current_tile_list)
         surface.fill((0,0,0))
+        if add_tile:
+            game_map[grid_stuff] = current_tile
+
         render_game_map(surface)
         tile_bar().render(surface)
         mx, my = pygame.mouse.get_pos()
         font.render(str("x: "+str(mx)+" y: "+str(my)), surface, (tile_bar().width, 0))
-        font.render("tiles: "+str(tile_count), surface, (tile_bar().width, 12))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 save_map(game_map)
@@ -172,17 +182,13 @@ if __name__ == '__main__':
                     mouse_collision_test(name_rects, mouse_rect)
                     change_tile(mouse_rect, rects, tiles2)
                 if event.button == 3:
-                    game_map[grid_stuff] = current_tile
-                    tile_count += 1
+                    add_tile = True
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 3:
+                    add_tile = False
             if event.type == KEYDOWN:
                 if event.key == K_DOWN:
-                    for grid_rect in grid_rects:
-                        if grid_rect.colliderect(mouse_rect):
-                            try:
-                                del game_map[grid_stuff]
-                                tile_count -= 1
-                            except KeyError:
-                                continue
+                    deleting = True
                 if event.key == K_MINUS:
                     mouse_scale *= 1.5
                     surface_size[0] /= 1.5
@@ -191,6 +197,12 @@ if __name__ == '__main__':
                     surface_size[0] *= 1.5
                     surface_size[1] *= 1.5
                     mouse_scale /= 1.5
+                    print(True)
+                if event.key == K_UP:
+                    delete_all()
+            if event.type == KEYUP:
+                if event.key == K_DOWN:
+                    deleting = False
         mx /= mouse_scale
         my /= mouse_scale
         mouse_rect = pygame.Rect(mx, my, 1, 1)
@@ -202,6 +214,13 @@ if __name__ == '__main__':
                 except:
                     pass
         grid_stuff = needed_grid_rect.x, needed_grid_rect.y
+        if deleting:
+            for grid_rect in grid_rects:
+                if grid_rect.colliderect(mouse_rect):
+                    try:
+                        del game_map[grid_stuff]#
+                    except:
+                        continue
         screen.blit(pygame.transform.scale(surface, SCREEN_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
